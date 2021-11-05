@@ -1,0 +1,35 @@
+FROM alpine:3.11
+ENV GLIBC_VER=2.31-r0
+# install glibc compatibility for alpine
+RUN apk --no-cache add \
+    binutils openssl git \
+    curl bash jq groff \
+    && curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
+    && chmod +x ./kubectl \
+    && mv ./kubectl /usr/local/bin/kubectl \
+    && curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > /tmp/get_helm.sh \
+    && chmod 700 /tmp/get_helm.sh && ./tmp/get_helm.sh && helm init -c \
+    && curl -sL https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub \
+    && curl -sLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VER}/glibc-${GLIBC_VER}.apk \
+    && curl -sLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VER}/glibc-bin-${GLIBC_VER}.apk \
+    && apk add --no-cache \
+    glibc-${GLIBC_VER}.apk \
+    glibc-bin-${GLIBC_VER}.apk \
+    && curl -sL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip \
+    && unzip awscliv2.zip \
+    && aws/install \
+    && curl -o /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest \
+    && curl -o ecs-cli.asc https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest.asc \
+    && chmod +x /usr/local/bin/ecs-cli \
+    && rm -rf \
+    awscliv2.zip \
+    aws \
+    /usr/local/aws-cli/v2/*/dist/aws_completer \
+    /usr/local/aws-cli/v2/*/dist/awscli/data/ac.index \
+    /usr/local/aws-cli/v2/*/dist/awscli/examples \
+    && apk --no-cache del \
+    binutils \
+    openssl \
+    && rm glibc-${GLIBC_VER}.apk \
+    && rm glibc-bin-${GLIBC_VER}.apk \
+    && rm -rf /var/cache/apk/*
